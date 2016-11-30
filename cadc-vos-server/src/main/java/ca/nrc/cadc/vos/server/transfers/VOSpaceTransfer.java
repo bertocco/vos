@@ -85,6 +85,7 @@ import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.io.ByteLimitExceededException;
 import ca.nrc.cadc.net.TransientException;
+import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.uws.ExecutionPhase;
 import ca.nrc.cadc.uws.Job;
@@ -136,7 +137,9 @@ public abstract class VOSpaceTransfer
         try
         {
             this.defaultViewURI = new URI(VOS.VIEW_DEFAULT);
-            this.serviceURI = new URI("ivo://cadc.nrc.ca/vospace");
+            LocalAuthority localAuthority = new LocalAuthority();
+            this.serviceURI =localAuthority.getServiceURI(Standards.VOSPACE_SYNC_21.toString());
+            //this.serviceURI = new URI("ivo://cadc.nrc.ca/vospace");
             log.debug("vospace serviceURI: " + serviceURI);
         }
         catch(Throwable bug)

@@ -58,6 +58,7 @@ import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.io.ByteLimitExceededException;
 import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.LocalAuthority.java;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.uws.ErrorSummary;
@@ -105,7 +106,9 @@ public class TransferRunner implements JobRunner
     {
         try
         {
-            this.serviceURI = new URI("ivo://cadc.nrc.ca/vospace");
+            // this.serviceURI = new URI("ivo://cadc.nrc.ca/vospace");
+            LocalAuthority localAuthority = new LocalAuthority();
+	    this.serviceURI =localAuthority.getServiceURI(Standards.VOSPACE_SYNC_21.toString());
             this.regClient = new RegistryClient();
         }
         catch(Throwable bug)
