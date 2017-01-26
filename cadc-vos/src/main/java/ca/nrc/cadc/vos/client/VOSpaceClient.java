@@ -74,40 +74,38 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.security.AccessControlContext;
-import java.security.AccessControlException;
 import java.security.AccessController;
-import java.security.Principal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 import javax.security.auth.Subject;
-import javax.security.auth.x500.X500Principal;
-
-import ca.nrc.cadc.auth.CookiePrincipal;
-import ca.nrc.cadc.auth.HttpPrincipal;
-import ca.nrc.cadc.net.*;
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.auth.SSOCookieCredential;
+import ca.nrc.cadc.auth.X509CertificateChain;
+import ca.nrc.cadc.net.HttpDelete;
+import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.HttpPost;
+import ca.nrc.cadc.net.HttpTransfer;
+import ca.nrc.cadc.net.HttpUpload;
+import ca.nrc.cadc.net.NetUtil;
+import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
-import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.vos.ContainerNode;
 import ca.nrc.cadc.vos.Direction;
 import ca.nrc.cadc.vos.Node;
-import ca.nrc.cadc.vos.NodeLockedException;
 import ca.nrc.cadc.vos.NodeNotFoundException;
 import ca.nrc.cadc.vos.NodeParsingException;
 import ca.nrc.cadc.vos.NodeProperty;
@@ -464,9 +462,7 @@ public class VOSpaceClient
                                 ? ("/" + path) : path;
         try
         {
-            final URL vospaceURL = getRegistryClient()
-                .getServiceURL(serviceID, Standards.VOSPACE_NODES_20,
-                               getAuthMethod());
+            final URL vospaceURL = getRegistryClient().getServiceURL(serviceID, Standards.VOSPACE_NODES_20, getAuthMethod());
             final URL url = new URL(vospaceURL.toExternalForm() + nodePath);
             final HttpDelete httpDelete = new HttpDelete(url, false);
 
@@ -724,34 +720,20 @@ public class VOSpaceClient
 
     private AuthMethod getAuthMethod()
     {
-        AuthMethod authMethod = AuthMethod.ANON;
         Subject subject = AuthenticationUtil.getCurrentSubject();
-        if (subject != null && !subject.getPrincipals().isEmpty())
+        if (subject != null)
         {
-            Set<X500Principal> x500Principals = subject.getPrincipals(X500Principal.class);
-            if (!x500Principals.isEmpty())
+            for (Object o : subject.getPublicCredentials())
             {
-                authMethod = AuthMethod.CERT;
-            }
-            else
-            {
-                Set<HttpPrincipal> httpPrincipals = subject.getPrincipals(HttpPrincipal.class);
-                if(!httpPrincipals.isEmpty())
-                {
-                    authMethod = AuthMethod.PASSWORD;
-                }
-                else
-                {
-                    Set<CookiePrincipal> cookiePrincipals = subject.getPrincipals(CookiePrincipal.class);
-                    if(!cookiePrincipals.isEmpty())
-                    {
-                        authMethod = AuthMethod.COOKIE;
-                    }
-                }
+                if (o instanceof X509CertificateChain)
+                    return AuthMethod.CERT;
+                if (o instanceof SSOCookieCredential)
+                    return AuthMethod.COOKIE;
+                // AuthMethod.PASSWORD not supported
+                // AuthMethod.TOKEN not supported
             }
         }
-        log.debug("Auth method: " + authMethod);
-        return authMethod;
+        return AuthMethod.ANON;
     }
 
 }
