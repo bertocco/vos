@@ -91,6 +91,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.CertCmdArgUtil;
 import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.auth.X509CertificateChain;
@@ -243,10 +244,7 @@ public class Main implements Runnable
         try
         {
             command.init(argMap);
-            if (command.subject != null)
-                Subject.doAs(command.subject, new RunnableAction(command));
-            else
-                command.run(); // anon
+            Subject.doAs(command.subject, new RunnableAction(command));
         }
         catch (IllegalArgumentException ex)
         {
@@ -986,7 +984,7 @@ public class Main implements Runnable
         else if ( ExecutionPhase.ABORTED.equals(ep) )
             throw new RuntimeException("transfer aborted by service");
         else if ( !ExecutionPhase.COMPLETED.equals(ep) )
-            throw new RuntimeException("unexpected job state: " + ep.name());
+            log.warn("unexpected job state: " + ep.name());
     }
 
     private void checkPhase(ClientRecursiveSetNode recSetNode)
@@ -1001,7 +999,7 @@ public class Main implements Runnable
         else if ( ExecutionPhase.ABORTED.equals(ep) )
             throw new RuntimeException("recursive set node aborted by service");
         else if ( !ExecutionPhase.COMPLETED.equals(ep) )
-            throw new RuntimeException("unexpected job state: " + ep.name());
+            log.warn("unexpected job state: " + ep.name());
     }
 
     /**
@@ -1202,6 +1200,8 @@ public class Main implements Runnable
                     }
                 }
             }
+            else
+                this.subject = AuthenticationUtil.getAnonSubject();
         }
         catch(Exception ex)
         {

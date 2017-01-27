@@ -83,6 +83,7 @@ import ca.nrc.cadc.vos.Protocol;
 import ca.nrc.cadc.vos.Transfer;
 import ca.nrc.cadc.vos.TransferReader;
 import ca.nrc.cadc.vos.VOSURI;
+import ca.nrc.cadc.vos.server.LocalServiceURI;
 import ca.nrc.cadc.vos.server.NodePersistence;
 import ca.nrc.cadc.vos.server.VOSpacePluginFactory;
 import ca.nrc.cadc.vos.server.auth.VOSpaceAuthorizer;
@@ -106,9 +107,8 @@ public class TransferRunner implements JobRunner
     {
         try
         {
-            // this.serviceURI = new URI("ivo://cadc.nrc.ca/vospace");
-            LocalAuthority localAuthority = new LocalAuthority();
-	    this.serviceURI =localAuthority.getServiceURI(Standards.VOSPACE_SYNC_21.toString());
+            LocalServiceURI localServiceURI = new LocalServiceURI();
+            this.serviceURI = localServiceURI.getURI();
             this.regClient = new RegistryClient();
         }
         catch(Throwable bug)
